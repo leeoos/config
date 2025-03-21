@@ -2,13 +2,13 @@
 
 # This script is used to set brightness on an external monitor
 
-# Set up directories 
-PWD=$(pwd)
+# Set up directories
+PWD=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 mkdir $PWD/log 2>/dev/null; LOG=$PWD/log
 mkdir $PWD/config 2>/dev/null; CONFIG=$PWD/config
 if [ ! -f $CONFIG/brightness.config ]
 then
-    echo 'BRIGHTNESS=1.0' >> $CONFIG/brightness.config  	
+    echo 'BRIGHTNESS=1.0' >> $CONFIG/brightness.config
 fi
 
 
@@ -21,17 +21,17 @@ change_value() {
     internal_error="Internal error: Not enough arguments for change_value()"
 
     if [ $# -lt 2 ]; then log "$internal_error"; fi
-    
+
     if ! $EXIT;
     then
 
-        if [ $1 -eq 1 ];    # 1 to increase 
+        if [ $1 -eq 1 ];    # 1 to increase
         then
             NEW_VALUE=$(echo $(echo $2'+'0.1 | bc -l))
         elif [ $1 -eq 0 ];  # 0 to decrease
         then
             NEW_VALUE=$(echo $(echo $2'-'0.1 | bc -l))
-        else 
+        else
             NEW_VALUE=1
             log  "$internal_error"
         fi
@@ -39,11 +39,11 @@ change_value() {
 }
 
 # Check if the value is valid, hence if it is between 0.2 or 1.0
-check_values() { 
+check_values() {
     ctrl=$(echo $(echo '(('$1'<'$2') || ('$1'>'$3'))' | bc -l))
-    if [ $ctrl -eq 1 ] 
+    if [ $ctrl -eq 1 ]
     then
-        echo "Cannot increase/decrease more" 
+        echo "Cannot increase/decrease more"
         NEW_VALUE="$BRIGHTNESS"
     fi;
 }
@@ -68,14 +68,14 @@ EXIT=false
 
 
 while read line; do
-    BRIGHTNESS=${line:11} 
-done < $CONFIG/brightness.config  
+    BRIGHTNESS=${line:11}
+done < $CONFIG/brightness.config
 
 # Check for argv
 if [ $# -lt 2 ]; then log "Error: No arguments provided" ; fi
 
 if ! $EXIT;
-then 
+then
     while true; do
         case "$1" in
             -s | --set) BRIGHTNESS_VALUE="$2"; break ;;
@@ -92,8 +92,8 @@ then
     # Check for correct value
     check_values "$NEW_VALUE" "0.2" "1.0"
 
-    echo   "Old brightness value: $BRIGHTNESS" > $LOG/brc.log 
-    echo   "New brightness value: $NEW_VALUE" > $LOG/brc.log 
+    echo   "Old brightness value: $BRIGHTNESS" > $LOG/brc.log
+    echo   "New brightness value: $NEW_VALUE" > $LOG/brc.log
 
     echo "BRIGHTNESS=$NEW_VALUE" > $CONFIG/brightness.config
 
