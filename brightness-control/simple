@@ -1,0 +1,23 @@
+#! /bin/bash
+
+MONITOR=$(xrandr --listmonitors | grep -E 'HDMI|DP' | awk '{print $4'})
+#echo $MONITOR
+
+if [ $# -eq 0 ] || [ -z "$1" ] 
+then
+  echo "No arguments supplied"
+  exit
+fi
+
+#if [ "$1" -gt 9 ] || [ "$1" -lt 2 ] 
+if [ "$1" -lt 2 ] 
+then
+  #echo "Error: Invalid value, $1 must be between 2 and 9"
+  echo "Error: Invalid value, $1 must be greater than 2"
+  exit 
+fi
+
+BRIGHTNESS_LEVEL="0.""$1"
+echo $BRIGHTNESS_LEVEL
+xrandr --output $MONITOR --brightness $BRIGHTNESS_LEVEL
+

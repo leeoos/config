@@ -1,0 +1,105 @@
+#! /bin/bash
+
+# This script is used to set brightness on an external monitor
+
+# Set up directories 
+PWD=$(pwd)
+mkdir $PWD/log 2>/dev/null; LOG=$PWD/log
+mkdir $PWD/config 2>/dev/null; CONFIG=$PWD/config
+if [ ! -f $CONFIG/brightness.config ]
+then
+    echo 'BRIGHTNESS=1.0' >> $CONFIG/brightness.config  	
+fi
+
+
+# FUNCTIONS
+# Usage warning function
+log() { echo "${1}" >> $LOG/brc.log ; echo >> $LOG/brc.log ; EXIT=true ; }
+
+# Increase or decrease current brightness value
+change_value() {
+    internal_error="Internal error: Not enough arguments for change_value()"
+
+    if [ $# -lt 2 ]; then log "$internal_error"; fi
+    
+    if ! $EXIT;
+    then
+
+        if [ $1 -eq 1 ];    # 1 to increase 
+        then
+            NEW_VALUE=$(echo $(echo $2'+'0.1 | bc -l))
+        elif [ $1 -eq 0 ];  # 0 to decrease
+        then
+            NEW_VALUE=$(echo $(echo $2'-'0.1 | bc -l))
+        else 
+            NEW_VALUE=1
+            log  "$internal_error"
+        fi
+    fi
+}
+
+# Check if the value is valid, hence if it is between 0.2 or 1.0
+check_values() { 
+    ctrl=$(echo $(echo '(('$1'<'$2') || ('$1'>'$3'))' | bc -l))
+    if [ $ctrl -eq 1 ] 
+    then
+        echo "Cannot increase/decrease more" 
+        NEW_VALUE="$BRIGHTNESS"
+    fi;
+}
+
+# GETOPT
+# The effect of the call to getopt is to canonicalize the options
+TEMP=$(getopt -o sud --long set:,up,down,target:\
+              -n 'brc' -- "$@")
+
+# Note the quotes around '$TEMP': they are essential!
+eval set -- "$TEMP"
+
+# MAIN
+# Global variables
+TARGET_DISPLAY="primary"   # set display option as primary display
+#MONITOR=$(xrandr --listmonitors | grep -E 'HDMI|DP' | awk '{print $4'})
+MONITOR=$(xrandr -q | grep -w 'connected' | awk '{print $1'})
+BRIGHTNESS=1.0
+#BRIGHTNESS_VALUE=1.0
+NEW_VALUE=1.0
+EXIT=false
+
+
+while read line; do
+    BRIGHTNESS=${line:11} 
+done < $CONFIG/brightness.config  
+
+# Check for argv
+if [ $# -lt 2 ]; then log "Error: No arguments provided" ; fi
+
+if ! $EXIT;
+then 
+    while true; do
+        case "$1" in
+            -s | --set) BRIGHTNESS_VALUE="$2"; break ;;
+            -u | --up) change_value  1 "$BRIGHTNESS" ; NEW_VALUE="$NEW_VALUE"; shift ;;
+            -d | --down) change_value 0 "$BRIGHTNESS" ; NEW_VALUE="$NEW_VALUE"; shift ;;
+            --target) shift 2;;
+           *) break ;;
+        esac
+    done
+fi
+
+if ! $EXIT;
+then
+    # Check for correct value
+    check_values "$NEW_VALUE" "0.2" "1.0"
+
+    echo   "Old brightness value: $BRIGHTNESS" > $LOG/brc.log 
+    echo   "New brightness value: $NEW_VALUE" > $LOG/brc.log 
+
+    echo "BRIGHTNESS=$NEW_VALUE" > $CONFIG/brightness.config
+
+    # Command to change brightness.
+    # first get the list of all connected display
+    # then assigne new brightness value for the target dispalay
+    # TODO: loop over the number of monitors if more than one
+    xrandr --output "$MONITOR" --brightness "$NEW_VALUE"
+fi
