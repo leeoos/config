@@ -1,4 +1,5 @@
 #! /bin/bash
+
 # Complete steps sequence for connection with certificate
 step ssh certificate 'colosi@babelscape.com' --provisioner cineca-hpc $HOME/.ssh/cineca/cineca_key
 eval "$(ssh-agent -s)"

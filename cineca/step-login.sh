@@ -1,4 +1,5 @@
 #! /bin/bash
+
 # Two factor authentication
 step ssh login 'colosi@babelscape.com' --provisioner cineca-hpc
 eval "$(ssh-agent -s)"

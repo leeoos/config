@@ -1,6 +1,6 @@
 #! /bin/bash
 
-mkdir -p $HOME/.ssh/cineca/
+mkdir -p $HOME/.ssh/cineca/ # to be sure the path exist
 step ssh certificate 'colosi@babelscape.com' --provisioner cineca-hpc $HOME/.ssh/cineca/cineca_key
 eval "$(ssh-agent -s)"
 ssh-keygen -f '/home/leeoos/.ssh/known_hosts' -R 'login.leonardo.cineca.it'
